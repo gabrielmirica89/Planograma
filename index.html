@@ -3,20 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Planogramă Raft - Dedeman.ro</title>
+    <title>Planogramă Raft - Dedeman</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { display: flex; height: 100vh; background-color: #f4f6f8; overflow: hidden; }
         
-        #sidebar { width: 340px; background: #fff; border-right: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; gap: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 10; }
-        h2 { font-size: 16px; color: #333; margin-bottom: 5px; }
-        .section { background: #f9f9f9; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
-        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; color: #555; }
-        input[type="number"], input[type="text"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; }
-        button { width: 100%; padding: 10px; background: #e65100; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        #sidebar { width: 340px; background: #fff; border-right: 1px solid #ddd; padding: 20px; display: flex; flex-direction: column; gap: 15px; box-shadow: 2px 0 5px rgba(0,0,0,0.05); z-index: 10; }
+        h2 { font-size: 15px; color: #333; margin-bottom: 5px; }
+        .section { background: #f9f9f9; padding: 12px; border-radius: 8px; border: 1px solid #eee; }
+        label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #555; }
+        input[type="number"], input[type="text"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 8px; font-size: 12px; }
+        button { width: 100%; padding: 9px; background: #e65100; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 12px; }
         button:hover { background: #bf360c; }
         
-        #product-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        #product-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
         .product-card { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 6px; cursor: grab; user-select: none; }
         .product-card img { width: 45px; height: 45px; object-fit: contain; }
         .product-info { font-size: 11px; overflow: hidden; }
@@ -35,7 +35,6 @@
 
         .shelf-board { height: 22px; background: linear-gradient(to bottom, #d7ccc8, #a1887f); border-top: 2px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.4); display: flex; align-items: flex-end; padding: 0 10px; gap: 8px; position: relative; overflow-x: auto; }
         
-        /* Afișare grup produse pe raft */
         .product-group { display: flex; align-items: flex-end; position: relative; cursor: pointer; border: 1px dashed transparent; }
         .product-group:hover { border-color: #ff9800; }
         
@@ -53,7 +52,6 @@
 
     <div id="sidebar">
         <h2>Configurator Raft</h2>
-        
         <div class="section">
             <label>Rânduri Polițe (Rafturi):</label>
             <input type="number" id="shelves-count" value="3" min="1" max="6">
@@ -64,11 +62,17 @@
             <button onclick="generateShelf()">Aplică Structura</button>
         </div>
 
-        <h2>Căutare Produs (www.dedeman.ro)</h2>
+        <h2>Adăugare Produs</h2>
         <div class="section">
             <label>Cod Articol / SAP Dedeman:</label>
             <input type="text" id="sap-code" placeholder="ex: 1024391">
             <button onclick="searchDedeman()">Caută Produs</button>
+            
+            <hr style="margin: 10px 0; border: 0; border-top: 1px solid #ddd;">
+            
+            <label>Sau adaugă direct URL Imagine:</label>
+            <input type="text" id="custom-img" placeholder="https://link-imagine.jpg">
+            <button onclick="addCustomProduct()" style="background: #444;">Adaugă Imagine</button>
         </div>
 
         <div id="product-list"></div>
@@ -89,7 +93,6 @@
             for (let i = 0; i < pegsCount; i++) {
                 const pegSection = document.createElement('div');
                 pegSection.className = 'shelf-section';
-                
                 const pegRow = document.createElement('div');
                 pegRow.className = 'pegs-row';
                 
@@ -99,7 +102,6 @@
                     setupDropZone(peg, true);
                     pegRow.appendChild(peg);
                 }
-                
                 pegSection.appendChild(pegRow);
                 container.appendChild(pegSection);
             }
@@ -107,7 +109,6 @@
             for (let i = 0; i < shelvesCount; i++) {
                 const shelfSection = document.createElement('div');
                 shelfSection.className = 'shelf-section';
-                
                 const board = document.createElement('div');
                 board.className = 'shelf-board';
                 setupDropZone(board, false);
@@ -122,7 +123,7 @@
             if (!code) return alert('Introduceți un cod!');
 
             const list = document.getElementById('product-list');
-            list.innerHTML = '<p style="font-size: 12px; color: #666;">Se caută pe www.dedeman.ro...</p>';
+            list.innerHTML = '<p style="font-size: 11px; color: #666;">Se caută produsul...</p>';
 
             try {
                 const targetUrl = `https://www.dedeman.ro/ro/search?q=${code}`;
@@ -139,20 +140,30 @@
 
                 if (imgElement) {
                     let imgSrc = imgElement.getAttribute('src') || imgElement.getAttribute('data-src');
-                    if (imgSrc && !imgSrc.startsWith('http')) {
-                        imgSrc = 'https://www.dedeman.ro' + imgSrc;
-                    }
+                    if (imgSrc && !imgSrc.startsWith('http')) imgSrc = 'https://www.dedeman.ro' + imgSrc;
                     
                     const title = titleElement ? titleElement.innerText.trim() : `Produs SAP: ${code}`;
                     addProductToList(imgSrc, title, code);
-                    list.querySelector('p')?.remove();
                 } else {
-                    list.innerHTML = '<p style="font-size: 12px; color: red;">Produsul nu a fost găsit pe Dedeman.ro.</p>';
+                    createFallbackProduct(code);
                 }
             } catch (err) {
-                console.error(err);
-                list.innerHTML = '<p style="font-size: 12px; color: red;">Eroare la conexiune.</p>';
+                // În caz de blocaj/eroare, creează automat un card funcțional
+                createFallbackProduct(code);
             }
+        }
+
+        function createFallbackProduct(code) {
+            // Imagine temporară placeholder cu codul SAP
+            const fallbackImg = `https://dummyimage.com/100x100/e65100/ffffff.png&text=SAP+${code}`;
+            addProductToList(fallbackImg, `Articol SAP: ${code}`, code);
+        }
+
+        function addCustomProduct() {
+            const url = document.getElementById('custom-img').value.trim();
+            if (!url) return alert('Introduceți URL-ul imaginii!');
+            addProductToList(url, 'Produs Personalizat', 'CUSTOM');
+            document.getElementById('custom-img').value = '';
         }
 
         function addProductToList(imgSrc, title, code) {
@@ -162,7 +173,7 @@
             card.draggable = true;
             
             card.innerHTML = `
-                <img src="${imgSrc}" alt="Produs">
+                <img src="${imgSrc}" alt="Produs" onerror="this.src='https://dummyimage.com/100x100/ccc/fff.png&text=Eroare+Img'">
                 <div class="product-info">
                     <div class="product-title">${title}</div>
                     <div class="product-code">SAP: ${code}</div>
@@ -174,6 +185,8 @@
             });
 
             list.prepend(card);
+            const statusMsg = list.querySelector('p');
+            if (statusMsg) statusMsg.remove();
         }
 
         function setupDropZone(element, isPeg) {
@@ -184,14 +197,14 @@
                 const imgSrc = e.dataTransfer.getData('text/plain');
                 
                 if (imgSrc) {
-                    const countPrompt = prompt(isPeg ? "Câte produse pui în adâncime pe acest cui?" : "Câte bucăți pui una lângă alta pe poliță?", "1");
+                    const countPrompt = prompt(isPeg ? "Câte produse pui pe acest cui?" : "Câte bucăți pui pe poliță?", "1");
                     const count = parseInt(countPrompt);
                     
                     if (isNaN(count) || count <= 0) return;
 
                     const group = document.createElement('div');
                     group.className = 'product-group';
-                    group.title = `${count} bucăți. Double-click pentru a șterge.`;
+                    group.title = `${count} bucăți. Dublu-click pentru a șterge.`;
 
                     for (let i = 0; i < count; i++) {
                         const img = document.createElement('img');
