@@ -15,7 +15,9 @@
         input[type="number"], input[type="text"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 8px; font-size: 12px; }
         button { width: 100%; padding: 9px; background: #e65100; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 12px; }
         button:hover { background: #bf360c; }
-        
+        .btn-secondary { background: #0288d1; margin-top: 4px; }
+        .btn-secondary:hover { background: #01579b; }
+
         #product-list { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 5px; }
         .product-card { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #ddd; padding: 8px; border-radius: 6px; cursor: grab; user-select: none; }
         .product-card img { width: 45px; height: 45px; object-fit: contain; }
@@ -62,17 +64,18 @@
             <button onclick="generateShelf()">Aplică Structura</button>
         </div>
 
-        <h2>Adăugare Produs</h2>
+        <h2>Adăugare Produs Dedeman</h2>
         <div class="section">
-            <label>Cod Articol / SAP Dedeman:</label>
+            <label>1. Introdu Cod / SAP Dedeman:</label>
             <input type="text" id="sap-code" placeholder="ex: 1024391">
-            <button onclick="searchDedeman()">Caută Produs</button>
-            
-            <hr style="margin: 10px 0; border: 0; border-top: 1px solid #ddd;">
-            
-            <label>Sau adaugă direct URL Imagine:</label>
-            <input type="text" id="custom-img" placeholder="https://link-imagine.jpg">
-            <button onclick="addCustomProduct()" style="background: #444;">Adaugă Imagine</button>
+            <button onclick="addSapProduct()">Adaugă Card Produs</button>
+            <button onclick="openDedemanPage()" class="btn-secondary">Deschide Produs pe Dedeman.ro ↗</button>
+
+            <hr style="margin: 12px 0; border: 0; border-top: 1px solid #ddd;">
+
+            <label>2. Adaugă URL Imagine (opțional):</label>
+            <input type="text" id="custom-img" placeholder="Lipește link-ul imaginii aici">
+            <button onclick="addCustomImage()" style="background: #43a047;">Alică Imaginea pe Produs</button>
         </div>
 
         <div id="product-list"></div>
@@ -118,51 +121,27 @@
             }
         }
 
-        async function searchDedeman() {
+        function openDedemanPage() {
+            const code = document.getElementById('sap-code').value.trim();
+            if (!code) return alert('Introduceți mai întâi un cod SAP!');
+            window.open(`https://www.dedeman.ro/ro/search?q=${code}`, '_blank');
+        }
+
+        function addSapProduct() {
             const code = document.getElementById('sap-code').value.trim();
             if (!code) return alert('Introduceți un cod!');
 
-            const list = document.getElementById('product-list');
-            list.innerHTML = '<p style="font-size: 11px; color: #666;">Se caută produsul...</p>';
-
-            try {
-                const targetUrl = `https://www.dedeman.ro/ro/search?q=${code}`;
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
-                
-                const response = await fetch(proxyUrl);
-                const data = await response.json();
-                
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(data.contents, 'text/html');
-                
-                const imgElement = doc.querySelector('.product-card img, .product-image img, img[src*="dedeman"]');
-                const titleElement = doc.querySelector('.product-name, .product-title, h2');
-
-                if (imgElement) {
-                    let imgSrc = imgElement.getAttribute('src') || imgElement.getAttribute('data-src');
-                    if (imgSrc && !imgSrc.startsWith('http')) imgSrc = 'https://www.dedeman.ro' + imgSrc;
-                    
-                    const title = titleElement ? titleElement.innerText.trim() : `Produs SAP: ${code}`;
-                    addProductToList(imgSrc, title, code);
-                } else {
-                    createFallbackProduct(code);
-                }
-            } catch (err) {
-                // În caz de blocaj/eroare, creează automat un card funcțional
-                createFallbackProduct(code);
-            }
-        }
-
-        function createFallbackProduct(code) {
-            // Imagine temporară placeholder cu codul SAP
             const fallbackImg = `https://dummyimage.com/100x100/e65100/ffffff.png&text=SAP+${code}`;
-            addProductToList(fallbackImg, `Articol SAP: ${code}`, code);
+            addProductToList(fallbackImg, `Produs SAP: ${code}`, code);
         }
 
-        function addCustomProduct() {
-            const url = document.getElementById('custom-img').value.trim();
-            if (!url) return alert('Introduceți URL-ul imaginii!');
-            addProductToList(url, 'Produs Personalizat', 'CUSTOM');
+        function addCustomImage() {
+            const imgUrl = document.getElementById('custom-img').value.trim();
+            const code = document.getElementById('sap-code').value.trim() || 'CUSTOM';
+
+            if (!imgUrl) return alert('Introduceți adresa imaginii!');
+
+            addProductToList(imgUrl, `Produs SAP: ${code}`, code);
             document.getElementById('custom-img').value = '';
         }
 
@@ -173,7 +152,7 @@
             card.draggable = true;
             
             card.innerHTML = `
-                <img src="${imgSrc}" alt="Produs" onerror="this.src='https://dummyimage.com/100x100/ccc/fff.png&text=Eroare+Img'">
+                <img src="${imgSrc}" alt="Produs" onerror="this.src='https://dummyimage.com/100x100/e65100/ffffff.png&text=SAP+${code}'">
                 <div class="product-info">
                     <div class="product-title">${title}</div>
                     <div class="product-code">SAP: ${code}</div>
@@ -185,8 +164,6 @@
             });
 
             list.prepend(card);
-            const statusMsg = list.querySelector('p');
-            if (statusMsg) statusMsg.remove();
         }
 
         function setupDropZone(element, isPeg) {
@@ -210,6 +187,9 @@
                         const img = document.createElement('img');
                         img.src = imgSrc;
                         img.className = 'placed-product';
+                        img.onerror = function() {
+                            this.src = 'https://dummyimage.com/100x100/e65100/ffffff.png&text=PRODUS';
+                        };
                         group.appendChild(img);
                     }
 
